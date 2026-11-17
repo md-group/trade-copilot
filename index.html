@@ -1,18 +1,183 @@
 <!DOCTYPE html>
 <html lang="ro">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trade Copilot</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trade Copilot</title>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+body{
+    font-family: Arial, sans-serif;
+    background:#111827;
+    color:white;
+    padding:20px;
+}
+
+.card{
+    background:#1f2937;
+    padding:20px;
+    border-radius:12px;
+    margin-bottom:20px;
+}
+
+input{
+    width:100%;
+    padding:10px;
+    margin-top:5px;
+    margin-bottom:10px;
+}
+
+canvas{
+    background:white;
+    border-radius:10px;
+}
+
+.result{
+    font-size:20px;
+    font-weight:bold;
+    color:#22c55e;
+}
+</style>
 </head>
+
 <body>
 
 <h1>Trade Copilot</h1>
 
+<div class="card">
+
+<label>Entry</label>
+<input id="entry" value="27871.8">
+
+<label>Current Price</label>
+<input id="current" value="27151.1">
+
+<label>Valoare punct (RON)</label>
+<input id="pip" value="9.73">
+
+<p class="result">
+Profit:
+<span id="profit">0</span> RON
+</p>
+
+</div>
+
+<div class="card">
+
+<label>Simulator</label>
+
+<input
+id="slider"
+type="range"
+min="25000"
+max="30000"
+value="27151">
+
+<p>
+Preț:
+<span id="sliderValue">27151</span>
+</p>
+
+</div>
+
+<div class="card">
+
+<canvas id="tradeChart"></canvas>
+
+</div>
+
 <script>
-console.log("Chart.js încărcat");
+
+const slider =
+document.getElementById("slider");
+
+let chart;
+
+function calculate(){
+
+    const entry =
+    parseFloat(
+        document.getElementById("entry").value
+    );
+
+    const current =
+    parseFloat(
+        document.getElementById("current").value
+    );
+
+    const pip =
+    parseFloat(
+        document.getElementById("pip").value
+    );
+
+    const profit =
+    (entry-current) * pip;
+
+    document.getElementById("profit")
+    .innerText =
+    profit.toFixed(0);
+
+    drawChart(entry,current);
+
+}
+
+function drawChart(entry,current){
+
+    const ctx =
+    document.getElementById("tradeChart");
+
+    if(chart){
+        chart.destroy();
+    }
+
+    chart = new Chart(ctx,{
+
+        type:"line",
+
+        data:{
+            labels:[
+                "Entry",
+                "Current"
+            ],
+
+            datasets:[{
+                data:[
+                    entry,
+                    current
+                ],
+                borderColor:"blue",
+                borderWidth:3
+            }]
+        },
+
+        options:{
+            responsive:true
+        }
+
+    });
+
+}
+
+slider.addEventListener(
+"input",
+(e)=>{
+
+    document.getElementById("current")
+    .value =
+    e.target.value;
+
+    document.getElementById("sliderValue")
+    .innerText =
+    e.target.value;
+
+    calculate();
+
+});
+
+calculate();
+
 </script>
 
 </body>
