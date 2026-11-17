@@ -3,16 +3,21 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>Trade Copilot</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="./config/supabase.js"></script>
 
 <style>
+
 body{
     font-family: Arial, sans-serif;
     background:#111827;
     color:white;
     padding:20px;
+    margin:0;
 }
 
 .card{
@@ -26,7 +31,10 @@ input{
     width:100%;
     padding:10px;
     margin-top:5px;
-    margin-bottom:10px;
+    margin-bottom:12px;
+    border-radius:6px;
+    border:none;
+    box-sizing:border-box;
 }
 
 canvas{
@@ -35,11 +43,30 @@ canvas{
 }
 
 .result{
-    font-size:20px;
+    font-size:18px;
     font-weight:bold;
     color:#22c55e;
 }
+
+.warning{
+    color:#f59e0b;
+    font-weight:bold;
+}
+
+.good{
+    color:#22c55e;
+}
+
+.medium{
+    color:#eab308;
+}
+
+.bad{
+    color:#ef4444;
+}
+
 </style>
+
 </head>
 
 <body>
@@ -47,6 +74,8 @@ canvas{
 <h1>Trade Copilot</h1>
 
 <div class="card">
+
+<h2>Trade</h2>
 
 <label>Entry</label>
 <input id="entry" value="27871.8">
@@ -66,7 +95,98 @@ Profit:
 
 <div class="card">
 
-<label>Simulator</label>
+<h2>Position Size Calculator</h2>
+
+<label>Capital Cont (€)</label>
+<input id="capital" value="10000">
+
+<label>Risc (%)</label>
+<input id="riskPercent" value="1">
+
+<label>Stop Loss (puncte)</label>
+<input id="stopPoints" value="1119.4">
+
+<p class="result">
+Risc permis:
+<span id="allowedRisk">0</span> EUR
+</p>
+
+<p class="result">
+Volum recomandat:
+<span id="recommendedVolume">0</span> lot
+</p>
+
+<p class="warning">
+<span id="warning"></span>
+</p>
+
+</div>
+
+<div class="card">
+
+<h2>Risk / Reward</h2>
+
+<label>Entry</label>
+<input id="rrEntry" value="27871.8">
+
+<label>Stop Loss</label>
+<input id="rrStop" value="28991.2">
+
+<label>Take Profit</label>
+<input id="rrTarget" value="25998.8">
+
+<p class="result">
+R:R:
+<span id="rrValue">0</span>
+</p>
+
+<p class="result">
+Win Rate minim:
+<span id="minWinRate">0</span>
+</p>
+
+</div>
+
+<div class="card">
+
+<div class="card">
+
+<h2>Trailing Stop Calculator</h2>
+
+<label>Trailing Stop Price</label>
+<input id="trailingStop" value="27470">
+
+<p class="result">
+Profit protejat:
+<span id="protectedProfit">0</span> RON
+</p>
+
+<p class="result">
+Profit neprotejat:
+<span id="unprotectedProfit">0</span> RON
+</p>
+
+<p class="result">
+Profit securizat:
+<span id="securedPercent">0</span> %
+</p>
+
+</div>
+
+<div class="card">
+
+<h2>Setup Score</h2>
+
+<p class="result">
+Scor:
+<span id="setupScore">0</span>/100
+</p>
+
+<p id="setupDetails"></p>
+
+</div>
+
+<h2>Simulator</h2>
 
 <input
 id="slider"
@@ -76,15 +196,32 @@ max="30000"
 value="27151">
 
 <p>
-Preț:
-<span id="sliderValue">27151</span>
+Preț simulat:
+<strong id="sliderValue">27151</strong>
 </p>
 
 </div>
 
 <div class="card">
 
+<h2>Grafic</h2>
+
 <canvas id="tradeChart"></canvas>
+
+</div>
+
+<div class="card">
+
+<h2>Trading Journal</h2>
+
+<label>Notițe</label>
+<input id="notes" placeholder="Observații despre trade">
+
+<button id="saveTrade">
+Save Trade
+</button>
+
+<p id="saveResult"></p>
 
 </div>
 
@@ -98,28 +235,208 @@ let chart;
 function calculate(){
 
     const entry =
-    parseFloat(
-        document.getElementById("entry").value
-    );
+    parseFloat(document.getElementById("entry").value);
 
     const current =
-    parseFloat(
-        document.getElementById("current").value
-    );
+    parseFloat(document.getElementById("current").value);
 
     const pip =
-    parseFloat(
-        document.getElementById("pip").value
-    );
+    parseFloat(document.getElementById("pip").value);
+
+    const capital =
+    parseFloat(document.getElementById("capital").value);
+
+    const riskPercent =
+    parseFloat(document.getElementById("riskPercent").value);
+
+    const stopPoints =
+    parseFloat(document.getElementById("stopPoints").value);
 
     const profit =
-    (entry-current) * pip;
+    (entry-current)*pip;
 
-    document.getElementById("profit")
-    .innerText =
+    document.getElementById("profit").innerText =
     profit.toFixed(0);
 
+    const allowedRisk =
+    capital*(riskPercent/100);
+
+    document.getElementById("allowedRisk").innerText =
+    allowedRisk.toFixed(2);
+
+    const riskPerLot =
+    stopPoints*pip;
+
+    const recommendedVolume =
+    allowedRisk/riskPerLot;
+
+    document.getElementById("recommendedVolume").innerText =
+    recommendedVolume.toFixed(3);
+
+    if(recommendedVolume < 0.02){
+
+        document.getElementById("warning").innerText =
+        "⚠️ Poziția de 0.1 lot este prea mare pentru risc 1%";
+
+    }else{
+
+        document.getElementById("warning").innerText =
+        "✅ Volumul este apropiat de recomandare";
+
+    }
+
+        const trailingStop =
+parseFloat(
+    document.getElementById("trailingStop").value
+);
+
+const protectedProfit =
+(entry - trailingStop) * pip;
+
+document.getElementById(
+    "protectedProfit"
+).innerText =
+protectedProfit.toFixed(0);
+
+const unprotectedProfit =
+profit - protectedProfit;
+
+document.getElementById(
+    "unprotectedProfit"
+).innerText =
+unprotectedProfit.toFixed(0);
+
+const securedPercent =
+(protectedProfit / profit) * 100;
+
+document.getElementById(
+    "securedPercent"
+).innerText =
+securedPercent.toFixed(1);
+
+    calculateRR();
+
+        let score = 50;
+
+let messages = [];
+
+const rrEntry =
+parseFloat(
+    document.getElementById("rrEntry").value
+);
+
+const rrStop =
+parseFloat(
+    document.getElementById("rrStop").value
+);
+
+const rrTarget =
+parseFloat(
+    document.getElementById("rrTarget").value
+);
+
+const risk =
+Math.abs(rrStop - rrEntry);
+
+const reward =
+Math.abs(rrEntry - rrTarget);
+
+const rr =
+reward / risk;
+
+if(rr >= 2){
+    score += 20;
+    messages.push("✅ R:R excelent");
+}
+else if(rr >= 1.5){
+    score += 10;
+    messages.push("✅ R:R acceptabil");
+}
+else{
+    score -= 15;
+    messages.push("⚠️ R:R slab");
+}
+
+if(recommendedVolume < 0.02){
+    score += 10;
+    messages.push("✅ Volum prudent");
+}
+else{
+    score -= 10;
+    messages.push("⚠️ Volum agresiv");
+}
+
+const securedPercentScore =
+profit > 0
+? (protectedProfit / profit) * 100
+: 0;
+
+if(securedPercentScore > 50){
+    score += 10;
+    messages.push("✅ Profit bine protejat");
+}
+
+score = Math.max(0, Math.min(100, score));
+
+document.getElementById(
+    "setupScore"
+).innerText = score;
+
+document.getElementById(
+    "setupDetails"
+).innerHTML =
+messages.join("<br>");
+
+    
     drawChart(entry,current);
+
+}
+
+function calculateRR(){
+
+    const rrEntry =
+    parseFloat(document.getElementById("rrEntry").value);
+
+    const rrStop =
+    parseFloat(document.getElementById("rrStop").value);
+
+    const rrTarget =
+    parseFloat(document.getElementById("rrTarget").value);
+
+    const risk =
+    Math.abs(rrStop-rrEntry);
+
+    const reward =
+    Math.abs(rrEntry-rrTarget);
+
+    const rr =
+    reward/risk;
+
+    const rrElement =
+    document.getElementById("rrValue");
+
+    rrElement.innerText =
+    "1 : " + rr.toFixed(2);
+
+    if(rr >= 2){
+
+        rrElement.className = "good";
+
+    }else if(rr >= 1.5){
+
+        rrElement.className = "medium";
+
+    }else{
+
+        rrElement.className = "bad";
+
+    }
+
+    const winRate =
+    100/(1+rr);
+
+    document.getElementById("minWinRate").innerText =
+    winRate.toFixed(1) + "%";
 
 }
 
@@ -143,38 +460,149 @@ function drawChart(entry,current){
             ],
 
             datasets:[{
+
                 data:[
                     entry,
                     current
                 ],
-                borderColor:"blue",
-                borderWidth:3
+
+                borderColor:"#2563eb",
+                borderWidth:3,
+
+                pointRadius:6,
+
+                fill:false
+
             }]
         },
 
         options:{
-            responsive:true
+            responsive:true,
+
+            plugins:{
+                legend:{
+                    display:false
+                }
+            }
         }
 
     });
 
 }
 
-slider.addEventListener(
-"input",
-(e)=>{
+slider.addEventListener("input",(e)=>{
 
-    document.getElementById("current")
-    .value =
+    document.getElementById("current").value =
     e.target.value;
 
-    document.getElementById("sliderValue")
-    .innerText =
+    document.getElementById("sliderValue").innerText =
     e.target.value;
 
     calculate();
 
 });
+
+document.querySelectorAll("input").forEach(input=>{
+
+    input.addEventListener(
+        "input",
+        calculate
+    );
+
+});
+
+document
+.getElementById("saveTrade")
+.addEventListener("click", saveTrade);
+
+async function saveTrade(){
+
+    try{
+
+        const symbol = "US100";
+
+        const entry =
+        parseFloat(
+        document.getElementById("entry").value);
+
+        const stopLoss =
+        parseFloat(
+        document.getElementById("rrStop").value);
+
+        const takeProfit =
+        parseFloat(
+        document.getElementById("rrTarget").value);
+
+        const trailingStop =
+        parseFloat(
+        document.getElementById("trailingStop").value);
+
+        const profit =
+        parseFloat(
+        document.getElementById("profit").innerText);
+
+        const setupScore =
+        parseFloat(
+        document.getElementById("setupScore").innerText);
+
+        const rrText =
+        document.getElementById("rrValue").innerText;
+
+        const riskReward =
+        parseFloat(
+            rrText.replace("1 : ","")
+        );
+
+        const notes =
+        document.getElementById("notes").value;
+
+        const { error } =
+        await supabaseClient
+        .from("trades")
+        .insert([{
+
+            symbol: symbol,
+
+            direction: "SHORT",
+
+            entry_price: entry,
+
+            stop_loss: stopLoss,
+
+            take_profit: takeProfit,
+
+            trailing_stop: trailingStop,
+
+            risk_reward: riskReward,
+
+            setup_score: setupScore,
+
+            profit: profit,
+
+            notes: notes
+
+        }]);
+
+        if(error) throw error;
+
+        document.getElementById(
+            "saveResult"
+        ).innerText =
+        "✅ Trade salvat în Supabase";
+
+    }
+    catch(error){
+
+        console.error(error);
+
+        document.getElementById(
+            "saveResult"
+        ).innerText =
+        "❌ Eroare la salvare";
+
+    }
+
+}
 
 calculate();
 
