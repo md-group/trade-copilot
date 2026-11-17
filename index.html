@@ -225,6 +225,56 @@ Save Trade
 
 </div>
 
+<div class="card">
+
+<h2>Statistics</h2>
+
+<p>Total Trades: <span id="totalTrades">0</span></p>
+
+<p>Winning Trades: <span id="winningTrades">0</span></p>
+
+<p>Win Rate: <span id="winRate">0%</span></p>
+
+<p>Total Profit: <span id="totalProfit">0</span></p>
+
+<p>Average Profit: <span id="avgProfit">0</span></p>
+
+<p>Average Win: <span id="avgWin">0</span></p>
+
+<p>Average Loss: <span id="avgLoss">0</span></p>
+
+<p>Profit Factor: <span id="profitFactor">0</span></p>
+
+</div>
+
+<div class="card">
+
+<h2>Trade History</h2>
+
+<button id="loadTrades">
+Load Trades
+</button>
+
+<table
+style="width:100%;margin-top:15px;border-collapse:collapse;">
+
+<thead>
+<tr>
+<th>Symbol</th>
+<th>Profit</th>
+<th>RR</th>
+<th>Score</th>
+</tr>
+</thead>
+
+<tbody id="tradesTable">
+
+</tbody>
+
+</table>
+
+</div>
+
 <script>
 
 const slider =
@@ -515,6 +565,10 @@ document
 .getElementById("saveTrade")
 .addEventListener("click", saveTrade);
 
+document
+.getElementById("loadTrades")
+.addEventListener("click", loadTrades);
+
 async function saveTrade(){
 
     try{
@@ -599,6 +653,138 @@ async function saveTrade(){
             "saveResult"
         ).innerText =
         "❌ Eroare la salvare";
+
+    }
+
+}
+
+async function loadTrades(){
+
+    try{
+
+        const { data, error } =
+        await supabaseClient
+        .from("trades")
+        .select("*")
+        .order("created_at", {
+            ascending:false
+        });
+
+        if(error) throw error;
+
+        const table =
+        document.getElementById(
+            "tradesTable"
+        );
+
+        table.innerHTML = "";
+
+        let totalProfit = 0;
+        let winningTrades = 0;
+
+        let totalWins = 0;
+        let totalLosses = 0;
+
+        let winAmount = 0;
+        let lossAmount = 0;
+
+        data.forEach(trade=>{
+
+            const pnl =
+            Number(trade.profit || 0);
+
+            if(pnl > 0){
+
+                totalWins++;
+
+                winAmount += pnl;
+
+            }else if(pnl < 0){
+
+                totalLosses++;
+
+                lossAmount += Math.abs(pnl);
+
+            }
+
+            totalProfit += Number(trade.profit || 0);
+            if(Number(trade.profit || 0) > 0){
+                winningTrades++;
+            }
+
+            table.innerHTML += `
+            <tr>
+                <td>${trade.symbol}</td>
+                <td>${trade.profit}</td>
+                <td>${trade.risk_reward}</td>
+                <td>${trade.setup_score}</td>
+            </tr>
+            `;
+
+        });
+
+        document.getElementById("totalTrades")
+        .innerText = data.length;
+        
+        document.getElementById("winningTrades")
+        .innerText = winningTrades;
+        
+        const winRate =
+        data.length > 0
+        ? (winningTrades / data.length) * 100
+        : 0;
+
+        document.getElementById("winRate")
+        .innerText =
+        winRate.toFixed(1) + "%";
+
+        document.getElementById("totalProfit")
+        .innerText =
+        totalProfit.toFixed(0) + " RON";
+
+        const avgProfit =
+        data.length > 0
+        ? totalProfit / data.length
+        : 0;
+
+        const avgWin =
+        totalWins > 0
+        ? winAmount / totalWins
+        : 0;
+
+        document.getElementById(
+            "avgWin"
+        ).innerText =
+        avgWin.toFixed(0) + " RON";
+
+        const avgLoss =
+        totalLosses > 0
+        ? lossAmount / totalLosses
+        : 0;
+
+        document.getElementById(
+            "avgLoss"
+        ).innerText =
+        avgLoss.toFixed(0) + " RON";
+
+        const profitFactor =
+        lossAmount > 0
+        ? winAmount / lossAmount
+        : 0;
+
+        document.getElementById(
+            "profitFactor"
+        ).innerText =
+        profitFactor.toFixed(2);
+
+        document.getElementById("avgProfit")
+        .innerText =
+        avgProfit.toFixed(0) + " RON";
+
+    }
+    catch(error){
+
+        console.error(error);
 
     }
 
