@@ -78,6 +78,31 @@ canvas{
     color:#ef4444;
 }
 
+table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+th,
+td{
+    text-align:center;
+    padding:10px;
+}
+
+th{
+    color:#22c55e;
+    font-weight:bold;
+    border-bottom:2px solid #374151;
+}
+
+td{
+    border-bottom:1px solid #374151;
+}
+
+tr:hover{
+    background:#273449;
+}
+
 </style>
 
 </head>
@@ -409,6 +434,7 @@ style="width:100%;margin-top:15px;border-collapse:collapse;">
 <th>Profit</th>
 <th>RR</th>
 <th>Score</th>
+<th>Edit</th>
 <th>Delete</th>
 </tr>
 </thead>
@@ -422,6 +448,8 @@ style="width:100%;margin-top:15px;border-collapse:collapse;">
 </div>
 
 <script>
+
+let editingTradeId = null;
 
 let chart;
 
@@ -1062,6 +1090,12 @@ async function loadTrades(){
                 <td>${trade.profit}</td>
                 <td>${trade.risk_reward}</td>
                 <td>${trade.setup_score}</td>
+                <td>
+                    <button onclick="editTrade(${trade.id})">
+                        ✏️
+                    </button>
+                </td>
+
                 <td>
                     <button onclick="deleteTrade(${trade.id})">
                         🗑️

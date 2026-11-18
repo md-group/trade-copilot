@@ -1,0 +1,40 @@
+table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+th,
+td{
+    text-align:center;
+    padding:10px;
+}
+
+th{
+    border-bottom:2px solid #374151;
+}
+
+td{
+    border-bottom:1px solid #374151;
+}
+
+th{
+    color:#22c55e;
+    font-weight:bold;
+}
+
+tr:hover{
+    background:#273449;
+}
+
+button{
+    padding:6px 10px;
+    border:none;
+    border-radius:6px;
+    cursor:pointer;
+}
+
+th{
+    position:sticky;
+    top:0;
+    background:#1f2937;
+}
