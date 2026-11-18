@@ -118,7 +118,7 @@ canvas{
     placeholder="Current Price"
 >
 
-<label>Valoare punct (RON)</label>
+<label>Valoare punct</label>
 <input
     id="pip"
     type="number"
@@ -178,13 +178,25 @@ Volum recomandat:
 <h2>Risk / Reward</h2>
 
 <label>Entry</label>
-<input id="rrEntry" type="number" placeholder="Entry">
+<input  
+    id="rrEntry" 
+    type="number" 
+    placeholder="Entry"
+>
 
 <label>Stop Loss</label>
-<input id="rrStop" type="number" placeholder="Stop Loss">
+<input 
+    id="rrStop" 
+    type="number" 
+    placeholder="Stop Loss"
+>
 
 <label>Take Profit</label>
-<input id="rrTarget" type="number" placeholder="Take Profit">
+<input 
+    id="rrTarget" 
+    type="number" 
+    placeholder="Take Profit"
+>
 
 <p class="result">
 R:R:
@@ -387,13 +399,17 @@ function calculate(){
     (entry-current)*pip;
 
     document.getElementById("profit").innerText =
-    profit.toFixed(0) + " " + currency;
+    (entry > 0 && current > 0)
+    ? profit.toFixed(0) + " " + currency
+    : "-";
 
     const allowedRisk =
     capital*(riskPercent/100);
 
     document.getElementById("allowedRisk").innerText =
-    allowedRisk.toFixed(2) + " " + currency;
+    (capital > 0 && riskPercent > 0)
+    ? allowedRisk.toFixed(2) + " " + currency
+    : "-";
 
     const riskPerLot =
     stopPoints*pip;
@@ -404,7 +420,9 @@ function calculate(){
     : 0;
 
     document.getElementById("recommendedVolume").innerText =
-    recommendedVolume.toFixed(3);
+    riskPerLot > 0
+    ? recommendedVolume.toFixed(3)
+    : "-";
 
     if(recommendedVolume < 0.02){
 
