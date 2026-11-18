@@ -248,6 +248,8 @@ Save Trade
 
 <p>Profit Factor: <span id="profitFactor">0</span></p>
 
+<p>Max Drawdown: <span id="maxDrawdown">0</span></p>
+
 </div>
 
 <div class="card">
@@ -261,6 +263,16 @@ Save Trade
 <div class="card">
 
 <h2>Trade History</h2>
+
+<label>Perioadă</label>
+
+<select id="periodFilter">
+    <option value="ALL">Toate</option>
+    <option value="TODAY">Astăzi</option>
+    <option value="WEEK">Ultimele 7 zile</option>
+    <option value="MONTH">Ultimele 30 zile</option>
+    <option value="YEAR">Anul curent</option>
+</select>
 
 <label>Filtru simbol</label>
 
@@ -698,6 +710,56 @@ async function loadTrades(){
         .from("trades")
         .select("*");
 
+        const period =
+        document.getElementById(
+            "periodFilter"
+        ).value;
+
+        if(period !== "ALL"){
+
+            let startDate =
+            new Date();
+
+            if(period === "TODAY"){
+
+                startDate.setHours(
+                    0,0,0,0
+                );
+
+            }
+            else if(period === "WEEK"){
+
+                startDate.setDate(
+                    startDate.getDate()-7
+                );
+
+            }
+            else if(period === "MONTH"){
+
+                startDate.setDate(
+                    startDate.getDate()-30
+                );
+
+            }
+            else if(period === "YEAR"){
+
+                startDate =
+                new Date(
+                    startDate.getFullYear(),
+                    0,
+                    1
+                );
+
+            }
+
+            query =
+            query.gte(
+                "created_at",
+                startDate.toISOString()
+            );
+
+        }
+
         if(symbolFilter){
 
             query =
@@ -729,6 +791,9 @@ async function loadTrades(){
 
         let equityData = [];
         let runningProfit = 0;
+
+        let peak = 0;
+        let maxDrawdown = 0;
         let winningTrades = 0;
 
         let totalWins = 0;
@@ -745,6 +810,22 @@ async function loadTrades(){
             runningProfit += pnl;
 
             equityData.push(runningProfit);
+
+            if(runningProfit > peak){
+                peak = runningProfit;
+            }
+
+            if(peak > 0){
+
+                const drawdown =
+                ((peak - runningProfit) / peak) * 100;
+
+                if(drawdown > maxDrawdown){
+                    maxDrawdown = drawdown;
+                }
+
+            }
+
 
             if(pnl > 0){
 
@@ -831,6 +912,28 @@ async function loadTrades(){
         lossAmount > 0
         ? winAmount / lossAmount
         : 0;
+
+        const ddElement =
+        document.getElementById("maxDrawdown");
+
+        ddElement.innerText =
+        maxDrawdown.toFixed(2) + "%";
+
+        if(maxDrawdown < 5){
+
+            ddElement.style.color="#22c55e";
+
+        }
+        else if(maxDrawdown < 10){
+
+            ddElement.style.color="#eab308";
+
+        }
+        else{
+
+            ddElement.style.color="#ef4444";
+
+        }
 
         document.getElementById(
             "profitFactor"
@@ -945,6 +1048,13 @@ document
 .getElementById("symbolFilter")
 .addEventListener(
     "input",
+    loadTrades
+);
+
+document
+.getElementById("periodFilter")
+.addEventListener(
+    "change",
     loadTrades
 );
 
