@@ -91,20 +91,43 @@ canvas{
 <h2>Trade</h2>
 
 <label>Simbol</label>
-<input id="symbol" value="US100">
+<input
+    id="symbol"
+    placeholder="Ex: US100, NVDA, BTCUSD..."
+>
+
+<label>Valută cont</label>
+
+<select id="currency">
+    <option value="EUR">EUR</option>
+    <option value="USD">USD</option>
+    <option value="RON">RON</option>
+</select>
 
 <label>Entry</label>
-<input id="entry" value="27871.8">
+<input
+    id="entry"
+    type="number"
+    placeholder="Entry"
+>
 
 <label>Current Price</label>
-<input id="current" value="27151.1">
+<input
+    id="current"
+    type="number"
+    placeholder="Current Price"
+>
 
 <label>Valoare punct (RON)</label>
-<input id="pip" value="9.73">
+<input
+    id="pip"
+    type="number"
+    placeholder="Valoare punct"
+>
 
 <p class="result">
 Profit:
-<span id="profit">0</span> RON
+<span id="profit">0</span>
 </p>
 
 </div>
@@ -113,18 +136,30 @@ Profit:
 
 <h2>Position Size Calculator</h2>
 
-<label>Capital Cont (€)</label>
-<input id="capital" value="10000">
+<label>Capital Cont</label>
+<input
+    id="capital"
+    type="number"
+    placeholder="Capital cont"
+>
 
 <label>Risc (%)</label>
-<input id="riskPercent" value="1">
+<input
+    id="riskPercent"
+    type="number"
+    placeholder="Risc %"
+>
 
 <label>Stop Loss (puncte)</label>
-<input id="stopPoints" value="1119.4">
+<input
+    id="stopPoints"
+    type="number"
+    placeholder="Stop Loss puncte"
+>
 
 <p class="result">
 Risc permis:
-<span id="allowedRisk">0</span> EUR
+<span id="allowedRisk">0</span>
 </p>
 
 <p class="result">
@@ -143,13 +178,13 @@ Volum recomandat:
 <h2>Risk / Reward</h2>
 
 <label>Entry</label>
-<input id="rrEntry" value="27871.8">
+<input id="rrEntry" type="number" placeholder="Entry">
 
 <label>Stop Loss</label>
-<input id="rrStop" value="28991.2">
+<input id="rrStop" type="number" placeholder="Stop Loss">
 
 <label>Take Profit</label>
-<input id="rrTarget" value="25998.8">
+<input id="rrTarget" type="number" placeholder="Take Profit">
 
 <p class="result">
 R:R:
@@ -165,21 +200,23 @@ Win Rate minim:
 
 <div class="card">
 
-<div class="card">
-
 <h2>Trailing Stop Calculator</h2>
 
 <label>Trailing Stop Price</label>
-<input id="trailingStop" value="27470">
+<input
+    id="trailingStop"
+    type="number"
+    placeholder="Trailing Stop"
+>
 
 <p class="result">
 Profit protejat:
-<span id="protectedProfit">0</span> RON
+<span id="protectedProfit">0</span>
 </p>
 
 <p class="result">
 Profit neprotejat:
-<span id="unprotectedProfit">0</span> RON
+<span id="unprotectedProfit">0</span>
 </p>
 
 <p class="result">
@@ -201,20 +238,6 @@ Scor:
 <p id="setupDetails"></p>
 
 </div>
-
-<h2>Simulator</h2>
-
-<input
-id="slider"
-type="range"
-min="25000"
-max="30000"
-value="27151">
-
-<p>
-Preț simulat:
-<strong id="sliderValue">27151</strong>
-</p>
 
 </div>
 
@@ -321,9 +344,6 @@ style="width:100%;margin-top:15px;border-collapse:collapse;">
 
 <script>
 
-const slider =
-document.getElementById("slider");
-
 let chart;
 
 let equityChart;
@@ -331,40 +351,57 @@ let equityChart;
 function calculate(){
 
     const entry =
-    parseFloat(document.getElementById("entry").value);
+    parseFloat(
+        document.getElementById("entry").value
+    ) || 0;
 
     const current =
-    parseFloat(document.getElementById("current").value);
+    parseFloat(
+        document.getElementById("current").value
+    ) || 0;
 
     const pip =
-    parseFloat(document.getElementById("pip").value);
+    parseFloat(
+        document.getElementById("pip").value
+    ) || 0;
+
+    const currency =
+    document.getElementById("currency").value;
 
     const capital =
-    parseFloat(document.getElementById("capital").value);
+    parseFloat(
+        document.getElementById("capital").value
+    ) || 0;
 
     const riskPercent =
-    parseFloat(document.getElementById("riskPercent").value);
+    parseFloat(
+        document.getElementById("riskPercent").value
+    ) || 0;
 
     const stopPoints =
-    parseFloat(document.getElementById("stopPoints").value);
+    parseFloat(
+        document.getElementById("stopPoints").value
+    ) || 0;
 
     const profit =
     (entry-current)*pip;
 
     document.getElementById("profit").innerText =
-    profit.toFixed(0);
+    profit.toFixed(0) + " " + currency;
 
     const allowedRisk =
     capital*(riskPercent/100);
 
     document.getElementById("allowedRisk").innerText =
-    allowedRisk.toFixed(2);
+    allowedRisk.toFixed(2) + " " + currency;
 
     const riskPerLot =
     stopPoints*pip;
 
     const recommendedVolume =
-    allowedRisk/riskPerLot;
+    riskPerLot > 0
+    ? allowedRisk / riskPerLot
+    : 0;
 
     document.getElementById("recommendedVolume").innerText =
     recommendedVolume.toFixed(3);
@@ -383,8 +420,8 @@ function calculate(){
 
         const trailingStop =
 parseFloat(
-    document.getElementById("trailingStop").value
-);
+        document.getElementById("trailingStop").value
+    ) || 0;
 
 const protectedProfit =
 (entry - trailingStop) * pip;
@@ -392,7 +429,7 @@ const protectedProfit =
 document.getElementById(
     "protectedProfit"
 ).innerText =
-protectedProfit.toFixed(0);
+protectedProfit.toFixed(0) + " " + currency;
 
 const unprotectedProfit =
 profit - protectedProfit;
@@ -400,10 +437,12 @@ profit - protectedProfit;
 document.getElementById(
     "unprotectedProfit"
 ).innerText =
-unprotectedProfit.toFixed(0);
+unprotectedProfit.toFixed(0) + " " + currency;
 
 const securedPercent =
-(protectedProfit / profit) * 100;
+profit !== 0
+? (protectedProfit / profit) * 100
+: 0;
 
 document.getElementById(
     "securedPercent"
@@ -418,18 +457,18 @@ let messages = [];
 
 const rrEntry =
 parseFloat(
-    document.getElementById("rrEntry").value
-);
+        document.getElementById("rrEntry").value
+    ) || 0;
 
 const rrStop =
 parseFloat(
-    document.getElementById("rrStop").value
-);
+        document.getElementById("rrStop").value
+    ) || 0;
 
 const rrTarget =
 parseFloat(
-    document.getElementById("rrTarget").value
-);
+        document.getElementById("rrTarget").value
+    ) || 0;
 
 const risk =
 Math.abs(rrStop - rrEntry);
@@ -438,7 +477,9 @@ const reward =
 Math.abs(rrEntry - rrTarget);
 
 const rr =
-reward / risk;
+risk > 0
+? reward / risk
+: 0;
 
 if(rr >= 2){
     score += 20;
@@ -491,13 +532,19 @@ messages.join("<br>");
 function calculateRR(){
 
     const rrEntry =
-    parseFloat(document.getElementById("rrEntry").value);
+    parseFloat(
+        document.getElementById("rrEntry").value
+    ) || 0;
 
     const rrStop =
-    parseFloat(document.getElementById("rrStop").value);
+    parseFloat(
+        document.getElementById("rrStop").value
+    ) || 0;
 
     const rrTarget =
-    parseFloat(document.getElementById("rrTarget").value);
+    parseFloat(
+        document.getElementById("rrTarget").value
+    ) || 0;
 
     const risk =
     Math.abs(rrStop-rrEntry);
@@ -511,8 +558,16 @@ function calculateRR(){
     const rrElement =
     document.getElementById("rrValue");
 
-    rrElement.innerText =
-    "1 : " + rr.toFixed(2);
+    if(rr > 0){
+
+        rrElement.innerText =
+        "1 : " + rr.toFixed(2);
+
+    }else{
+
+        rrElement.innerText = "-";
+
+    }
 
     if(rr >= 2){
 
@@ -528,11 +583,15 @@ function calculateRR(){
 
     }
 
-    const winRate =
-    100/(1+rr);
+   const winRate =
+    rr > 0
+    ? 100/(1+rr)
+    : 0;
 
     document.getElementById("minWinRate").innerText =
-    winRate.toFixed(1) + "%";
+    rr > 0
+    ? winRate.toFixed(1) + "%"
+    : "-";
 
 }
 
@@ -585,18 +644,6 @@ function drawChart(entry,current){
     });
 
 }
-
-slider.addEventListener("input",(e)=>{
-
-    document.getElementById("current").value =
-    e.target.value;
-
-    document.getElementById("sliderValue").innerText =
-    e.target.value;
-
-    calculate();
-
-});
 
 document.querySelectorAll("input").forEach(input=>{
 
