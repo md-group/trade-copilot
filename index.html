@@ -96,6 +96,28 @@ canvas{
     placeholder="Ex: US100, NVDA, BTCUSD..."
 >
 
+<label>Strategie</label>
+
+<select id="strategy">
+
+    <option value="">Selectează</option>
+
+    <option value="Breakout">Breakout</option>
+
+    <option value="Pullback">Pullback</option>
+
+    <option value="Trend Following">Trend Following</option>
+
+    <option value="Mean Reversion">Mean Reversion</option>
+
+    <option value="News">News</option>
+
+    <option value="Scalp">Scalp</option>
+
+    <option value="Swing">Swing</option>
+
+</select>
+
 <label>Valută cont</label>
 
 <select id="currency">
@@ -310,6 +332,32 @@ Save Trade
 
 <div class="card">
 
+<h2>Strategy Statistics</h2>
+
+<p>Trades: <span id="strategyTrades">0</span></p>
+
+<p>Win Rate: <span id="strategyWinRate">0%</span></p>
+
+<p>Profit Total: <span id="strategyProfit">0</span></p>
+
+<p>Profit Mediu: <span id="strategyAvgProfit">0</span></p>
+
+<p>Profit Factor: <span id="strategyProfitFactor">0</span></p>
+
+</div>
+
+<div class="card">
+
+<h2>Strategy Ranking</h2>
+
+<div id="strategyRanking">
+
+</div>
+
+</div>
+
+<div class="card">
+
 <h2>Trade History</h2>
 
 <label>Perioadă</label>
@@ -329,9 +377,27 @@ Save Trade
     placeholder="US100, BTCUSD, NVDA, AAPL..."
 >
 
-<button id="loadTrades">
-Load Trades
-</button>
+<label>Filtru strategie</label>
+
+<select id="strategyFilter">
+
+    <option value="">Toate</option>
+
+    <option value="Breakout">Breakout</option>
+
+    <option value="Pullback">Pullback</option>
+
+    <option value="Trend Following">Trend Following</option>
+
+    <option value="Mean Reversion">Mean Reversion</option>
+
+    <option value="News">News</option>
+
+    <option value="Scalp">Scalp</option>
+
+    <option value="Swing">Swing</option>
+
+</select>
 
 <table
 style="width:100%;margin-top:15px;border-collapse:collapse;">
@@ -339,6 +405,7 @@ style="width:100%;margin-top:15px;border-collapse:collapse;">
 <thead>
 <tr>
 <th>Symbol</th>
+<th>Strategy</th>
 <th>Profit</th>
 <th>RR</th>
 <th>Score</th>
@@ -676,10 +743,6 @@ document
 .getElementById("saveTrade")
 .addEventListener("click", saveTrade);
 
-document
-.getElementById("loadTrades")
-.addEventListener("click", loadTrades);
-
 async function saveTrade(){
 
     try{
@@ -722,6 +785,9 @@ async function saveTrade(){
             rrText.replace("1 : ","")
         );
 
+        const strategy =
+        document.getElementById("strategy").value;
+
         const notes =
         document.getElementById("notes").value;
 
@@ -731,6 +797,8 @@ async function saveTrade(){
         .insert([{
 
             symbol: symbol,
+
+            strategy: strategy,
 
             direction: "SHORT",
 
@@ -787,6 +855,10 @@ async function loadTrades(){
         supabaseClient
         .from("trades")
         .select("*");
+
+        const strategyFilter =
+        document.getElementById("strategyFilter")
+        .value;
 
         const period =
         document.getElementById(
@@ -848,6 +920,16 @@ async function loadTrades(){
 
         }
 
+        if(strategyFilter){
+
+            query =
+            query.eq(
+                "strategy",
+                strategyFilter
+            );
+
+        }
+
         const { data, error } =
         await query.order(
             "created_at",
@@ -858,6 +940,8 @@ async function loadTrades(){
 
         if(error) throw error;
 
+        const strategies = {};
+
         const table =
         document.getElementById(
             "tradesTable"
@@ -866,6 +950,12 @@ async function loadTrades(){
         table.innerHTML = "";
 
         let totalProfit = 0;
+
+        let strategyWins = 0;
+        let strategyLosses = 0;
+
+        let strategyWinAmount = 0;
+        let strategyLossAmount = 0;
 
         let equityData = [];
         let runningProfit = 0;
@@ -884,6 +974,47 @@ async function loadTrades(){
 
             const pnl =
             Number(trade.profit || 0);
+
+            const strategy =
+            trade.strategy || "Unknown";
+
+            if(!strategies[strategy]){
+
+                strategies[strategy] = {
+                    wins:0,
+                    losses:0,
+                    winAmount:0,
+                    lossAmount:0
+                };
+
+            }
+
+            if(pnl > 0){
+
+                strategies[strategy].wins++;
+                strategies[strategy].winAmount += pnl;
+
+            }
+            else if(pnl < 0){
+
+                strategies[strategy].losses++;
+                strategies[strategy].lossAmount +=
+                Math.abs(pnl);
+
+            }
+
+            if(pnl > 0){
+
+                strategyWins++;
+                strategyWinAmount += pnl;
+
+            }
+            else if(pnl < 0){
+
+                strategyLosses++;
+                strategyLossAmount += Math.abs(pnl);
+
+            }
 
             runningProfit += pnl;
 
@@ -927,6 +1058,7 @@ async function loadTrades(){
             table.innerHTML += `
             <tr>
                 <td>${trade.symbol}</td>
+                <td>${trade.strategy || "-"}</td>
                 <td>${trade.profit}</td>
                 <td>${trade.risk_reward}</td>
                 <td>${trade.setup_score}</td>
@@ -939,6 +1071,89 @@ async function loadTrades(){
             `;
 
         });
+
+        document.getElementById(
+            "strategyTrades"
+        ).innerText =
+        data.length;
+
+        const strategyWinRate =
+        data.length > 0
+        ? (winningTrades / data.length) * 100
+        : 0;
+
+        document.getElementById(
+            "strategyWinRate"
+        ).innerText =
+        strategyWinRate.toFixed(1) + "%";
+
+        document.getElementById(
+            "strategyProfit"
+        ).innerText =
+        totalProfit.toFixed(0);
+
+        const strategyAvgProfit =
+        data.length > 0
+        ? totalProfit / data.length
+        : 0;
+
+        document.getElementById(
+            "strategyAvgProfit"
+        ).innerText =
+        strategyAvgProfit.toFixed(0);
+
+        const strategyProfitFactor =
+        strategyLossAmount > 0
+        ? strategyWinAmount / strategyLossAmount
+        : 0;
+
+        document.getElementById(
+            "strategyProfitFactor"
+        ).innerText =
+        strategyProfitFactor.toFixed(2);
+
+        const ranking = [];
+
+        Object.entries(strategies)
+        .forEach(([name, stats])=>{
+
+            const pf =
+            stats.lossAmount > 0
+            ? stats.winAmount /
+            stats.lossAmount
+            : 0;
+
+            ranking.push({
+                name,
+                pf
+            });
+
+        });
+
+        ranking.sort(
+            (a,b)=>b.pf-a.pf
+        );
+
+        const rankingDiv =
+        document.getElementById(
+            "strategyRanking"
+        );
+
+        rankingDiv.innerHTML = "";
+
+        ranking.forEach(
+            (item,index)=>{
+
+                rankingDiv.innerHTML += `
+                    <p>
+                    ${index+1}.
+                    ${item.name}
+                    - PF ${item.pf.toFixed(2)}
+                    </p>
+                `;
+
+            }
+        );
 
         drawEquityCurve(equityData);
 
@@ -1130,12 +1345,20 @@ document
 );
 
 document
+.getElementById("strategyFilter")
+.addEventListener(
+    "change",
+    loadTrades
+);
+
+document
 .getElementById("periodFilter")
 .addEventListener(
     "change",
     loadTrades
 );
 
+loadTrades();
 
 calculate();
 
