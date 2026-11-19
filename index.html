@@ -842,6 +842,10 @@ document
 .getElementById("saveTrade")
 .addEventListener("click", saveTrade);
 
+document
+.getElementById("updateTrade")
+.addEventListener("click", updateTrade);
+
 async function saveTrade(){
 
     try{
@@ -1425,16 +1429,8 @@ async function editTrade(id){
 
     }
 
-    console.log(data);
-    alert("Trade încărcat");
-
-    //document.getElementById("symbol").value =
-    //data.symbol || "";
-
-    console.log(
-    document.getElementById("symbol")
-    );
-
+    document.getElementById("symbol").value =
+    data.symbol || "";
 
     document.getElementById("strategy").value =
     data.strategy || "";
@@ -1453,6 +1449,77 @@ async function editTrade(id){
         behavior:"smooth"
     });
     
+
+}
+
+async function updateTrade(){
+
+    if(!editingTradeId){
+        return;
+    }
+
+    try{
+
+        const symbol =
+        document.getElementById("symbol")
+        .value
+        .trim()
+        .toUpperCase();
+
+        const strategy =
+        document.getElementById("strategy")
+        .value;
+
+        const selectedVolume =
+        parseFloat(
+            document.getElementById(
+                "selectedVolume"
+            ).value
+        ) || 0;
+
+        const notes =
+        document.getElementById("notes")
+        .value;
+        
+        const { error } =
+        await supabaseClient
+        .from("trades")
+        .update({
+
+            symbol: symbol,
+            strategy: strategy,
+            selected_volume: selectedVolume,
+            notes: notes
+
+        })
+        .eq("id", editingTradeId);
+
+        if(error){
+            throw error;
+        }
+
+        editingTradeId = null;
+
+        document.getElementById(
+            "updateTrade"
+        ).style.display = "none";
+
+        await loadTrades();
+
+        alert(
+            "✅ Trade actualizat"
+        );
+
+    }
+    catch(error){
+
+        console.error(error);
+
+        alert(
+            "❌ Eroare la actualizare"
+        );
+
+    }
 
 }
 
