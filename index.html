@@ -327,7 +327,14 @@ Scor:
 <input id="notes" placeholder="Observații despre trade">
 
 <button id="saveTrade">
-Save Trade
+    Save Trade
+</button>
+
+<button
+    id="updateTrade"
+    style="display:none;"
+>
+    Update Trade
 </button>
 
 <p id="saveResult"></p>
@@ -442,6 +449,7 @@ style="width:100%;margin-top:15px;border-collapse:collapse;">
 <tr>
 <th>Symbol</th>
 <th>Strategy</th>
+<th>Volume</th>
 <th>Profit</th>
 <th>RR</th>
 <th>Score</th>
@@ -1160,6 +1168,13 @@ async function loadTrades(){
             <tr>
                 <td>${trade.symbol}</td>
                 <td>${trade.strategy || "-"}</td>
+                <td>
+                ${
+                    trade.selected_volume
+                    ? Number(trade.selected_volume).toFixed(3)
+                    : "-"
+                }
+                </td>
                 <td>${trade.profit}</td>
                 <td>${trade.risk_reward}</td>
                 <td>${trade.setup_score}</td>
@@ -1389,6 +1404,55 @@ async function deleteTrade(id){
         );
 
     }
+
+}
+
+async function editTrade(id){
+
+    editingTradeId = id;
+
+    const { data, error } =
+    await supabaseClient
+    .from("trades")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+    if(error){
+
+        console.error(error);
+        return;
+
+    }
+
+    console.log(data);
+    alert("Trade încărcat");
+
+    //document.getElementById("symbol").value =
+    //data.symbol || "";
+
+    console.log(
+    document.getElementById("symbol")
+    );
+
+
+    document.getElementById("strategy").value =
+    data.strategy || "";
+
+    document.getElementById("selectedVolume").value =
+    data.selected_volume || "";
+
+    document.getElementById("notes").value =
+    data.notes || "";
+
+    document.getElementById("updateTrade").style.display =
+    "block";
+
+    window.scrollTo({
+        top:0,
+        behavior:"smooth"
+    });
+    
 
 }
 
