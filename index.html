@@ -214,6 +214,17 @@ Volum recomandat:
 <span id="recommendedVolume">0</span> lot
 </p>
 
+<label>Volum ales</label>
+
+<input
+    id="selectedVolume"
+    type="number"
+    step="0.01"
+    placeholder="Ex. 0.10"
+>
+
+<p id="riskIndicator"></p>
+
 <p class="warning">
 <span id="warning"></span>
 </p>
@@ -490,6 +501,11 @@ function calculate(){
         document.getElementById("stopPoints").value
     ) || 0;
 
+    const selectedVolume =
+    parseFloat(
+        document.getElementById("selectedVolume").value
+    ) || 0;
+
     const profit =
     (entry-current)*pip;
 
@@ -519,17 +535,64 @@ function calculate(){
     ? recommendedVolume.toFixed(3)
     : "-";
 
-    if(recommendedVolume < 0.02){
+    const riskIndicator =
+    document.getElementById("riskIndicator");
 
-        document.getElementById("warning").innerText =
-        "⚠️ Poziția de 0.1 lot este prea mare pentru risc 1%";
+    if(
+        recommendedVolume > 0 &&
+        selectedVolume > 0
+    ){
 
-    }else{
+        const ratio =
+        selectedVolume /
+        recommendedVolume;
 
-        document.getElementById("warning").innerText =
-        "✅ Volumul este apropiat de recomandare";
+        if(ratio <= 1.2){
+
+            riskIndicator.innerText =
+            "✅ Volum disciplinat";
+
+            riskIndicator.style.color =
+            "#22c55e";
+
+        }
+        else if(ratio <= 2){
+
+            riskIndicator.innerText =
+            `⚠️ Volumul este ${ratio.toFixed(1)}x peste recomandare`;
+
+            riskIndicator.style.color =
+            "#eab308";
+
+        }
+        else{
+
+            riskIndicator.innerText =
+            `🚨 Volumul este ${ratio.toFixed(1)}x peste recomandare`;
+
+            riskIndicator.style.color =
+            "#ef4444";
+
+        }
 
     }
+    else{
+
+        riskIndicator.innerText = "";
+
+    }
+
+        if(recommendedVolume < 0.02){
+
+            document.getElementById("warning").innerText =
+            "⚠️ Poziția de 0.1 lot este prea mare pentru risc 1%";
+
+        }else{
+
+            document.getElementById("warning").innerText =
+            "✅ Volumul este apropiat de recomandare";
+
+        }
 
         const trailingStop =
 parseFloat(
@@ -775,6 +838,13 @@ async function saveTrade(){
 
     try{
 
+        const selectedVolume =
+        parseFloat(
+            document.getElementById(
+                "selectedVolume"
+            ).value
+        ) || 0;
+
         const symbol =
         document.getElementById("symbol")
         .value
@@ -827,6 +897,9 @@ async function saveTrade(){
             symbol: symbol,
 
             strategy: strategy,
+
+            selected_volume:
+            selectedVolume,
 
             direction: "SHORT",
 
@@ -1205,10 +1278,13 @@ async function loadTrades(){
         document.getElementById("winRate")
         .innerText =
         winRate.toFixed(1) + "%";
+        
+        const currency =
+        document.getElementById("currency").value;
 
         document.getElementById("totalProfit")
         .innerText =
-        totalProfit.toFixed(0) + " RON";
+        totalProfit.toFixed(0) + " " + currency;
 
         const avgProfit =
         data.length > 0
@@ -1223,7 +1299,7 @@ async function loadTrades(){
         document.getElementById(
             "avgWin"
         ).innerText =
-        avgWin.toFixed(0) + " RON";
+        avgWin.toFixed(0) + " " + currency;
 
         const avgLoss =
         totalLosses > 0
@@ -1233,7 +1309,7 @@ async function loadTrades(){
         document.getElementById(
             "avgLoss"
         ).innerText =
-        avgLoss.toFixed(0) + " RON";
+        avgLoss.toFixed(0) + " " + currency;
 
         const profitFactor =
         lossAmount > 0
@@ -1269,7 +1345,7 @@ async function loadTrades(){
 
         document.getElementById("avgProfit")
         .innerText =
-        avgProfit.toFixed(0) + " RON";
+        avgProfit.toFixed(0) + " " + currency;
 
     }
     catch(error){
