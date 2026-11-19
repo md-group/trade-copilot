@@ -23,87 +23,7 @@
 
 <meta name="theme-color" content="#111827">
 
-<style>
-
-body{
-    font-family: Arial, sans-serif;
-    background:#111827;
-    color:white;
-    padding:20px;
-    margin:0;
-}
-
-.card{
-    background:#1f2937;
-    padding:20px;
-    border-radius:12px;
-    margin-bottom:20px;
-}
-
-input{
-    width:100%;
-    padding:10px;
-    margin-top:5px;
-    margin-bottom:12px;
-    border-radius:6px;
-    border:none;
-    box-sizing:border-box;
-}
-
-canvas{
-    background:white;
-    border-radius:10px;
-}
-
-.result{
-    font-size:18px;
-    font-weight:bold;
-    color:#22c55e;
-}
-
-.warning{
-    color:#f59e0b;
-    font-weight:bold;
-}
-
-.good{
-    color:#22c55e;
-}
-
-.medium{
-    color:#eab308;
-}
-
-.bad{
-    color:#ef4444;
-}
-
-table{
-    width:100%;
-    border-collapse:collapse;
-}
-
-th,
-td{
-    text-align:center;
-    padding:10px;
-}
-
-th{
-    color:#22c55e;
-    font-weight:bold;
-    border-bottom:2px solid #374151;
-}
-
-td{
-    border-bottom:1px solid #374151;
-}
-
-tr:hover{
-    background:#273449;
-}
-
-</style>
+<link rel="stylesheet" href="style.css">
 
 </head>
 
@@ -120,6 +40,20 @@ tr:hover{
     id="symbol"
     placeholder="Ex: US100, NVDA, BTCUSD..."
 >
+
+<label>Tip tranzacție</label>
+
+<select id="direction">
+
+    <option value="">Selectează</option>
+
+    <option value="LONG">LONG</option>
+
+    <option value="SHORT">SHORT</option>
+
+    <option value="SPOT">SPOT</option>
+
+</select>
 
 <label>Strategie</label>
 
@@ -442,27 +376,31 @@ Scor:
 
 </select>
 
-<table
-style="width:100%;margin-top:15px;border-collapse:collapse;">
+<div class="history-wrapper">
 
-<thead>
-<tr>
-<th>Symbol</th>
-<th>Strategy</th>
-<th>Volume</th>
-<th>Profit</th>
-<th>RR</th>
-<th>Score</th>
-<th>Edit</th>
-<th>Delete</th>
-</tr>
-</thead>
+    <table class="history-table">
 
-<tbody id="tradesTable">
+        <thead>
+        <tr>
+        <th>Symbol</th>
+        <th>Dir</th>
+        <th>Strategy</th>
+        <th>Vol</th>
+        <th>Profit</th>
+        <th>R:R</th>
+        <th>Score</th>
+        <th>✏️</th>
+        <th>🗑️</th>
+        </tr>
+        </thead>
 
-</tbody>
+        <tbody id="tradesTable">
 
-</table>
+        </tbody>
+
+    </table>
+
+</div>
 
 </div>
 
@@ -901,6 +839,10 @@ async function saveTrade(){
         const notes =
         document.getElementById("notes").value;
 
+        const direction =
+        document.getElementById("direction")
+        .value;
+
         const { error } =
         await supabaseClient
         .from("trades")
@@ -913,7 +855,7 @@ async function saveTrade(){
             selected_volume:
             selectedVolume,
 
-            direction: "SHORT",
+            direction: direction,
 
             entry_price: entry,
 
@@ -1171,6 +1113,15 @@ async function loadTrades(){
             table.innerHTML += `
             <tr>
                 <td>${trade.symbol}</td>
+                <td>
+
+                    ${trade.direction === "LONG"
+                    ? "🟢 LONG"
+                    : trade.direction === "SHORT"
+                    ? "🔴 SHORT"
+                    : "🔵 SPOT"}
+
+                </td>
                 <td>${trade.strategy || "-"}</td>
                 <td>
                 ${
@@ -1179,7 +1130,16 @@ async function loadTrades(){
                     : "-"
                 }
                 </td>
-                <td>${trade.profit}</td>
+                <td style="
+                color:${
+                    Number(trade.profit) >= 0
+                    ? '#22c55e'
+                    : '#ef4444'
+                };
+                font-weight:bold;
+                ">
+                ${trade.profit}
+                </td>
                 <td>${trade.risk_reward}</td>
                 <td>${trade.setup_score}</td>
                 <td>

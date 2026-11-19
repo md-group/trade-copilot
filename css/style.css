@@ -1,15 +1,49 @@
-table{
-    width:100%;
-    border-collapse:collapse;
+/* Layout */
+
+body{
+    font-family: Arial, sans-serif;
+    background:#111827;
+    color:white;
+    padding:20px;
+    margin:0;
 }
 
-th,
+canvas{
+    background:white;
+    border-radius:10px;
+}
+
+.result{
+    font-size:18px;
+    font-weight:bold;
+    color:#22c55e;
+}
+
+.warning{
+    color:#f59e0b;
+    font-weight:bold;
+}
+
+.good{
+    color:#22c55e;
+}
+
+.medium{
+    color:#eab308;
+}
+
+.bad{
+    color:#ef4444;
+}
+
 td{
     text-align:center;
     padding:10px;
 }
 
 th{
+    color:#22c55e;
+    font-weight:bold;
     border-bottom:2px solid #374151;
 }
 
@@ -17,24 +51,73 @@ td{
     border-bottom:1px solid #374151;
 }
 
-th{
-    color:#22c55e;
-    font-weight:bold;
-}
-
 tr:hover{
     background:#273449;
 }
 
-button{
-    padding:6px 10px;
-    border:none;
-    border-radius:6px;
-    cursor:pointer;
+/* Cards */
+
+.card{
+    background:#1f2937;
+    padding:20px;
+    border-radius:12px;
+    margin-bottom:20px;
 }
 
-th{
-    position:sticky;
-    top:0;
-    background:#1f2937;
+/* Forms */
+
+input{
+    width:100%;
+    padding:10px;
+    margin-top:5px;
+    margin-bottom:12px;
+    border-radius:6px;
+    border:none;
+    box-sizing:border-box;
 }
+
+/* Buttons */
+
+/* Statistics */
+
+/* Trade History */
+
+table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+.history-wrapper{
+    width:100%;
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+}
+
+.history-table{
+    width:100%;
+    min-width:900px;
+    border-collapse:collapse;
+}
+
+/* Mobile */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
