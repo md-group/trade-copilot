@@ -2,7 +2,7 @@
 <html lang="ro">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=overlays-content">
 
 <title>Trade Copilot</title>
 
@@ -784,103 +784,142 @@ document
 .getElementById("updateTrade")
 .addEventListener("click", updateTrade);
 
+function tradePayload(){
+
+    const selectedVolume =
+    parseFloat(
+        document.getElementById(
+            "selectedVolume"
+        ).value
+    ) || 0;
+
+    const symbol =
+    document.getElementById("symbol")
+    .value
+    .trim()
+    .toUpperCase();
+
+    const entry =
+    parseFloat(
+    document.getElementById("entry").value);
+
+    const stopLoss =
+    parseFloat(
+    document.getElementById("rrStop").value);
+
+    const takeProfit =
+    parseFloat(
+    document.getElementById("rrTarget").value);
+
+    const trailingStop =
+    parseFloat(
+    document.getElementById("trailingStop").value);
+
+    const profit =
+    parseFloat(
+    document.getElementById("profit").innerText);
+
+    const setupScore =
+    parseFloat(
+    document.getElementById("setupScore").innerText);
+
+    const rrText =
+    document.getElementById("rrValue").innerText;
+
+    const riskReward =
+    parseFloat(
+        rrText.replace("1 : ","")
+    );
+
+    const strategy =
+    document.getElementById("strategy").value;
+
+    const notes =
+    document.getElementById("notes").value;
+
+    const direction =
+    document.getElementById("direction")
+    .value;
+
+    return {
+
+        symbol: symbol,
+
+        strategy: strategy,
+
+        selected_volume:
+        selectedVolume,
+
+        direction: direction,
+
+        entry_price: entry,
+
+        stop_loss: stopLoss,
+
+        take_profit: takeProfit,
+
+        trailing_stop: trailingStop,
+
+        risk_reward: riskReward,
+
+        setup_score: setupScore,
+
+        profit: profit,
+
+        notes: notes
+
+    };
+
+}
+
+function resetTradeForm(){
+
+    [
+        "symbol",
+        "entry",
+        "current",
+        "pip",
+        "selectedVolume",
+        "rrEntry",
+        "rrStop",
+        "rrTarget",
+        "trailingStop",
+        "notes"
+    ].forEach(id=>{
+
+        document.getElementById(id).value = "";
+
+    });
+
+    document.getElementById("direction").value = "";
+
+    document.getElementById("strategy").value = "";
+
+    document.getElementById("saveResult").innerText = "";
+
+    editingTradeId = null;
+
+    document.getElementById("updateTrade")
+    .style.display = "none";
+
+    calculate();
+
+}
+
 async function saveTrade(){
 
     try{
 
-        const selectedVolume =
-        parseFloat(
-            document.getElementById(
-                "selectedVolume"
-            ).value
-        ) || 0;
-
-        const symbol =
-        document.getElementById("symbol")
-        .value
-        .trim()
-        .toUpperCase();
-
-        const entry =
-        parseFloat(
-        document.getElementById("entry").value);
-
-        const stopLoss =
-        parseFloat(
-        document.getElementById("rrStop").value);
-
-        const takeProfit =
-        parseFloat(
-        document.getElementById("rrTarget").value);
-
-        const trailingStop =
-        parseFloat(
-        document.getElementById("trailingStop").value);
-
-        const profit =
-        parseFloat(
-        document.getElementById("profit").innerText);
-
-        const setupScore =
-        parseFloat(
-        document.getElementById("setupScore").innerText);
-
-        const rrText =
-        document.getElementById("rrValue").innerText;
-
-        const riskReward =
-        parseFloat(
-            rrText.replace("1 : ","")
-        );
-
-        const strategy =
-        document.getElementById("strategy").value;
-
-        const notes =
-        document.getElementById("notes").value;
-
-        const direction =
-        document.getElementById("direction")
-        .value;
-
         const { error } =
         await supabaseClient
         .from("trades")
-        .insert([{
-
-            symbol: symbol,
-
-            strategy: strategy,
-
-            selected_volume:
-            selectedVolume,
-
-            direction: direction,
-
-            entry_price: entry,
-
-            stop_loss: stopLoss,
-
-            take_profit: takeProfit,
-
-            trailing_stop: trailingStop,
-
-            risk_reward: riskReward,
-
-            setup_score: setupScore,
-
-            profit: profit,
-
-            notes: notes
-
-        }]);
+        .insert([tradePayload()]);
 
         if(error) throw error;
 
-        document.getElementById(
-            "saveResult"
-        ).innerText =
-        "✅ Trade salvat în Supabase";
+        resetTradeForm();
+
+        await loadTrades();
 
     }
     catch(error){
@@ -1392,17 +1431,39 @@ async function editTrade(id){
     document.getElementById("symbol").value =
     data.symbol || "";
 
+    document.getElementById("direction").value =
+    data.direction || "";
+
     document.getElementById("strategy").value =
     data.strategy || "";
 
     document.getElementById("selectedVolume").value =
-    data.selected_volume || "";
+    data.selected_volume ?? "";
+
+    document.getElementById("entry").value =
+    data.entry_price ?? "";
+
+    document.getElementById("rrEntry").value =
+    data.entry_price ?? "";
+
+    document.getElementById("rrStop").value =
+    data.stop_loss ?? "";
+
+    document.getElementById("rrTarget").value =
+    data.take_profit ?? "";
+
+    document.getElementById("trailingStop").value =
+    data.trailing_stop ?? "";
 
     document.getElementById("notes").value =
     data.notes || "";
 
+    document.getElementById("saveResult").innerText = "";
+
     document.getElementById("updateTrade").style.display =
     "block";
+
+    calculate();
 
     window.scrollTo({
         top:0,
@@ -1420,55 +1481,19 @@ async function updateTrade(){
 
     try{
 
-        const symbol =
-        document.getElementById("symbol")
-        .value
-        .trim()
-        .toUpperCase();
-
-        const strategy =
-        document.getElementById("strategy")
-        .value;
-
-        const selectedVolume =
-        parseFloat(
-            document.getElementById(
-                "selectedVolume"
-            ).value
-        ) || 0;
-
-        const notes =
-        document.getElementById("notes")
-        .value;
-        
         const { error } =
         await supabaseClient
         .from("trades")
-        .update({
-
-            symbol: symbol,
-            strategy: strategy,
-            selected_volume: selectedVolume,
-            notes: notes
-
-        })
+        .update(tradePayload())
         .eq("id", editingTradeId);
 
         if(error){
             throw error;
         }
 
-        editingTradeId = null;
-
-        document.getElementById(
-            "updateTrade"
-        ).style.display = "none";
+        resetTradeForm();
 
         await loadTrades();
-
-        alert(
-            "✅ Trade actualizat"
-        );
 
     }
     catch(error){
